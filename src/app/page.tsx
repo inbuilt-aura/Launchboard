@@ -9,6 +9,7 @@ import {
   Bookmark,
   Share2,
   ChevronRight,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,26 +25,50 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Camera } from "lucide-react";
 import { sidebarData } from "../lib/data";
 import { Toaster, toast } from "react-hot-toast";
 
-function Sidebar() {
+interface ProfileData {
+  name: string;
+  description: string;
+  title: string;
+  avatar: string;
+  bannerImage?: string;
+  banner?: string;
+}
+
+interface SidebarProps {
+  profileData: ProfileData;
+  profileCompletion: {
+    percentage: number;
+    message: string;
+  };
+  savedResources: Array<{ name: string; link: string }>;
+  quickLinks: string[];
+}
+
+function Sidebar({
+  profileData: initialProfileData,
+  profileCompletion,
+  savedResources,
+  quickLinks,
+}: SidebarProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState(sidebarData.profileData);
-  const bannerInputRef = useRef(null);
-  const profileInputRef = useRef(null);
+  const [profileData, setProfileData] =
+    useState<ProfileData>(initialProfileData);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const profileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  const handleSave = (newData) => {
+  const handleSave = (newData: Partial<ProfileData>) => {
     setProfileData((prevData) => ({ ...prevData, ...newData }));
     setIsEditing(false);
   };
 
-  const handleImageUpload = (type) => {
+  const handleImageUpload = (type: "banner" | "profile") => {
     if (type === "banner" && bannerInputRef.current) {
       bannerInputRef.current.click();
     } else if (type === "profile" && profileInputRef.current) {
@@ -51,15 +76,20 @@ function Sidebar() {
     }
   };
 
-  const onFileChange = (e, type) => {
+  const onFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "banner" | "profile"
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
+        const target = event.target;
+        if (target?.result) {
           setProfileData((prev) => ({
             ...prev,
-            [type === "banner" ? "bannerImage" : "avatar"]: event.target.result,
+            [type === "banner" ? "bannerImage" : "avatar"]:
+              target.result as string,
           }));
         }
       };
@@ -166,17 +196,17 @@ function Sidebar() {
             </h3>
           </div>
           <p className="text-xs text-gray-500 mb-2 pt-2">
-            {sidebarData.profileCompletion.message}
+            {profileCompletion.message}
           </p>
           <div className="mb-1 pt-2">
             <Progress
-              value={sidebarData.profileCompletion.percentage}
+              value={profileCompletion.percentage}
               className="h-2 bg-gray-200"
             />
           </div>
           <div className="text-right mt-2">
             <span className="text-sm text-black">
-              {sidebarData.profileCompletion.percentage}% completed
+              {profileCompletion.percentage}% completed
             </span>
           </div>
         </div>
@@ -198,7 +228,7 @@ function Sidebar() {
             </h3>
           </div>
           <ul className="space-y-1 ml-8 list-disc text-[black]">
-            {sidebarData.savedResources.map((resource, index) => (
+            {savedResources.map((resource, index) => (
               <li key={index}>
                 <a
                   href={resource.link}
@@ -221,7 +251,7 @@ function Sidebar() {
             <h3 className="text-sm font-medium text-gray-900">Quick links</h3>
           </div>
           <ul className="space-y-1 list-disc ml-8 text-black">
-            {sidebarData.quickLinks.map((link, index) => (
+            {quickLinks.map((link, index) => (
               <li key={index}>
                 <a href="#" className="text-xs text-[#888888] hover:underline">
                   {link}
@@ -240,11 +270,11 @@ function Sidebar() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              const formData = new FormData(e.target);
+              const formData = new FormData(e.target as HTMLFormElement);
               handleSave({
-                name: formData.get("name"),
-                title: formData.get("title"),
-                banner: formData.get("banner"),
+                name: formData.get("name") as string,
+                title: formData.get("title") as string,
+                banner: formData.get("banner") as string,
               });
             }}
           >
@@ -293,8 +323,17 @@ function Sidebar() {
   );
 }
 
-// Job Card Component
-function JobCard({ job }) {
+interface Job {
+  title: string;
+  company: string;
+  companyLogo: string;
+  location: string;
+  type: string;
+  salary: string;
+  description: string;
+}
+
+function JobCard({ job }: { job: Job }) {
   return (
     <Card className="bg-white">
       <CardContent className="p-6">
@@ -349,8 +388,19 @@ function JobCard({ job }) {
   );
 }
 
-// Project Card Component
-function ProjectCard({ project }) {
+interface Project {
+  name: string;
+  logo: string;
+  stage: string;
+  description: string;
+  location: string;
+  type: string;
+  employees: number;
+  upvotes: number;
+  comments: number;
+}
+
+function ProjectCard({ project }: { project: Project }) {
   return (
     <Card className="bg-white">
       <CardContent className="p-6">
@@ -404,7 +454,6 @@ function ProjectCard({ project }) {
   );
 }
 
-// Feature Alert Component
 function FeatureAlert() {
   return (
     <Card className="bg-white text-white">
@@ -438,8 +487,18 @@ function FeatureAlert() {
   );
 }
 
-// Trending Section Component
-function TrendingSection({ type, items }) {
+interface TrendingItem {
+  title: string;
+  subtitle: string;
+}
+
+function TrendingSection({
+  type,
+  items,
+}: {
+  type: string;
+  items: TrendingItem[];
+}) {
   return (
     <Card className="bg-white">
       <CardHeader className="pb-3">
@@ -464,17 +523,29 @@ function TrendingSection({ type, items }) {
   );
 }
 
-function ConnectionRequests({ requests }) {
-  const [remainingRequests, setRemainingRequests] = useState(requests);
+interface ConnectionRequest {
+  id: string;
+  name: string;
+  role: string;
+  mutual: number;
+  avatar: string;
+}
 
-  const handleAccept = (index) => {
+function ConnectionRequests({
+  requests: initialRequests,
+}: {
+  requests: ConnectionRequest[];
+}) {
+  const [remainingRequests, setRemainingRequests] = useState(initialRequests);
+
+  const handleAccept = (index: number) => {
     toast.success("Connection request accepted!");
 
     const updatedRequests = remainingRequests.filter((_, i) => i !== index);
     setRemainingRequests(updatedRequests);
   };
 
-  const handleReject = (index) => {
+  const handleReject = (index: number) => {
     toast.error("Connection request rejected");
 
     const updatedRequests = remainingRequests.filter((_, i) => i !== index);
@@ -546,11 +617,22 @@ function ConnectionRequests({ requests }) {
   );
 }
 
-// Suggested Connections Component
-function SuggestedConnections({ suggestions }) {
-  const [remainingSuggestions, setRemainingSuggestions] = useState(suggestions);
+interface SuggestedConnection {
+  name: string;
+  role: string;
+  mutual: number;
+  avatar: string;
+}
 
-  const handleConnect = (index) => {
+function SuggestedConnections({
+  suggestions: initialSuggestions,
+}: {
+  suggestions: SuggestedConnection[];
+}) {
+  const [remainingSuggestions, setRemainingSuggestions] =
+    useState(initialSuggestions);
+
+  const handleConnect = (index: number) => {
     toast.success("Connection request sent");
 
     const updatedSuggestions = remainingSuggestions.filter(
@@ -614,35 +696,10 @@ function SuggestedConnections({ suggestions }) {
   );
 }
 
-// Main Component
 export default function HomePage() {
-  const [view, setView] = useState("for-you");
+  const [view, setView] = useState<"for-you" | "following">("for-you");
 
-  // const user = {
-  //   name: "Divya Yash",
-  //   role: "Product Designer",
-  //   avatar: "/avatars/me.png",
-  //   connections: 1269,
-  //   jobOffers: 18,
-  //   projects: 28
-  // }
-
-  // const profileCompletion = {
-  //   percentage: 70,
-  //   completed: 7,
-  //   total: 10,
-  //   message: "Complete your profile to attract more opportunities"
-  // }
-
-  // const savedResources = [
-  //   { name: "Jobs", count: 12 },
-  //   { name: "Projects", count: 4 },
-  //   { name: "Courses", count: 6 },
-  // ]
-
-  // const quickLinks = ["Find Jobs", "Network", "Learning", "Career Advice"]
-
-  const jobs = [
+  const jobs: Job[] = [
     {
       title: "Product Designer",
       company: "Frie AI",
@@ -665,7 +722,7 @@ export default function HomePage() {
     },
   ];
 
-  const projects = [
+  const projects: Project[] = [
     {
       name: "Hash Corp",
       logo: "/images/companies/hash-corp.png",
@@ -692,19 +749,19 @@ export default function HomePage() {
     },
   ];
 
-  const trendingJobs = [
+  const trendingJobs: TrendingItem[] = [
     { title: "Technical Support Engineer", subtitle: "Remote • Full time" },
     { title: "Software Engineer", subtitle: "Remote • Full time" },
     { title: "Blockchain Developer", subtitle: "Remote • Full time" },
   ];
 
-  const trendingProjects = [
+  const trendingProjects: TrendingItem[] = [
     { title: "Video Streaming Platform", subtitle: "Growth Stage • B2B" },
     { title: "VR sharing playground", subtitle: "Growth Stage • B2B" },
     { title: "Java Legacy Refactoring", subtitle: "Growth Stage • B2B" },
   ];
 
-  const connectionRequests = [
+  const connectionRequests: ConnectionRequest[] = [
     {
       id: "1",
       name: "Emily Flint",
@@ -721,7 +778,7 @@ export default function HomePage() {
     },
   ];
 
-  const suggestedConnections = [
+  const suggestedConnections: SuggestedConnection[] = [
     {
       name: "Jeff Sanders",
       role: "Frontend Developer",
@@ -742,7 +799,12 @@ export default function HomePage() {
       <div className="container max-w-[1400px] mx-auto grid grid-cols-12 gap-6 px-4 py-8">
         {/* Left Sidebar */}
         <div className="col-span-3 space-y-6">
-          <Sidebar />
+          <Sidebar
+            profileData={sidebarData.profileData}
+            profileCompletion={sidebarData.profileCompletion}
+            savedResources={sidebarData.savedResources}
+            quickLinks={sidebarData.quickLinks}
+          />
         </div>
 
         {/* Main Content */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Bookmark, Facebook, Link2, Linkedin, Mail, Share2, Twitter, PhoneIcon as WhatsApp } from 'lucide-react'
+import { Bookmark, Facebook, Link2, Linkedin, Mail, Share2, Twitter, PhoneIcon as WhatsApp, MapPin, DollarSign, Clock, Briefcase } from 'lucide-react'
 import Image from "next/image"
 import { useState } from 'react'
 
@@ -25,7 +25,10 @@ interface JobCardProps {
   description: string
   isActivelyHiring?: boolean
   isBookmarked?: boolean
+  isApplied?: boolean
   onBookmark?: () => void
+  onApply?: () => void
+  onShare?: () => void
 }
 
 export function JobCard({
@@ -40,7 +43,10 @@ export function JobCard({
   description,
   isActivelyHiring = false,
   isBookmarked = false,
+  isApplied = false,
   onBookmark,
+  onApply,
+  onShare,
 }: JobCardProps) {
   const [copied, setCopied] = useState(false)
 
@@ -60,13 +66,14 @@ export function JobCard({
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+      if (onShare) onShare()
     } else {
       window.open(urls[platform as keyof typeof urls], '_blank')
     }
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden white-border">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex gap-4">
@@ -78,70 +85,75 @@ export function JobCard({
               className="rounded-lg h-12 w-auto"
             />
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
                 <h3 className="font-semibold text-sm text-muted-foreground">{companyName}</h3>
-                {isActivelyHiring && (
-                  <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Actively hiring</span>
-                )}
               </div>
               <h4 className="text-lg font-semibold mt-1">{position}</h4>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                <span>{location}</span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
-                <span>{employmentType}</span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
-                <span>${salary}</span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
-                <span>{postedTime}</span>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center"><MapPin className="w-3 h-3 mr-1" />{location}</span>
+                <span className="flex items-center"><Briefcase className="w-3 h-3 mr-1" />{employmentType}</span>
+                <span className="flex items-center"><DollarSign className="w-3 h-3 mr-1" />${salary}</span>
+                <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{postedTime}</span>
               </div>
+              {isActivelyHiring && (
+                <span className="mt-2 inline-block rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Actively hiring</span>
+              )}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onBookmark}
-              className={isBookmarked ? "text-[#FF5C35]" : ""}
+          <div className="flex items-start gap-2">
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onBookmark}
+                className={isBookmarked ? "text-[#FB7637]" : ""}
+              >
+                <Bookmark className="h-4 w-4" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleShare('twitter')}>
+                    <Twitter className="mr-2 h-4 w-4" />
+                    Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('facebook')}>
+                    <Facebook className="mr-2 h-4 w-4" />
+                    Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('linkedin')}>
+                    <Linkedin className="mr-2 h-4 w-4" />
+                    LinkedIn
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
+                    <WhatsApp className="mr-2 h-4 w-4" />
+                    WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('email')}>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Email
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('copy')}>
+                    <Link2 className="mr-2 h-4 w-4" />
+                    {copied ? 'Copied!' : 'Copy link'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <Button 
+              className={`bg-[#FB7637] hover:bg-[#FB7637]/90 text-white ${isApplied ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={onApply}
+              disabled={isApplied}
             >
-              <Bookmark className="h-4 w-4" />
+              {isApplied ? 'Applied' : 'Apply'}
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleShare('twitter')}>
-                  <Twitter className="mr-2 h-4 w-4" />
-                  Twitter
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('facebook')}>
-                  <Facebook className="mr-2 h-4 w-4" />
-                  Facebook
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('linkedin')}>
-                  <Linkedin className="mr-2 h-4 w-4" />
-                  LinkedIn
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
-                  <WhatsApp className="mr-2 h-4 w-4" />
-                  WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('email')}>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Email
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('copy')}>
-                  <Link2 className="mr-2 h-4 w-4" />
-                  {copied ? 'Copied!' : 'Copy link'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button className="bg-[#FF5C35] hover:bg-[#FF5C35]/90 text-white">Apply</Button>
           </div>
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-4 text-sm text-muted-foreground pl-16">{description}</p>
       </CardContent>
     </Card>
   )

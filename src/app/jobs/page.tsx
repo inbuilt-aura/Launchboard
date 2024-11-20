@@ -11,7 +11,7 @@ import {
 import Image from "next/image";
 import { useState, useRef, useEffect, ChangeEvent, useCallback } from "react";
 import { Toaster, toast } from "react-hot-toast";
-
+import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -232,6 +232,8 @@ export default function JobBoard() {
   }, []);
 
   return (
+    <div className="font-poppins min-h-screen bg-gray-50 py-20">
+      <Navbar />
     <div className="min-h-screen bg-background">
       <Toaster />
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 py-8">
@@ -593,7 +595,10 @@ export default function JobBoard() {
               <p className="text-muted-foreground mb-4">
                 Start applying to jobs to see them here
               </p>
-              <Button className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">
+              <Button
+                className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white"
+                onClick={() => setActiveTab("navigate-jobs")}
+              >
                 Explore jobs
               </Button>
             </div>
@@ -713,6 +718,7 @@ export default function JobBoard() {
           }
         `}</style>
       </div>
+    </div>
     </div>
   );
 }

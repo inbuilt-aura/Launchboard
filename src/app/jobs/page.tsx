@@ -6,9 +6,10 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ChangeEvent, useCallback } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 import { Button } from "@/components/ui/button";
@@ -35,11 +36,15 @@ export default function JobBoard() {
   const [selectedSalaryType, setSelectedSalaryType] = useState("yearly");
   const [bookmarkedJobs, setBookmarkedJobs] = useState<string[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [resumeUploaded, setResumeUploaded] = useState(false);
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [jobs, setJobs] = useState([
     {
       id: "1",
       companyName: "Ecma Corp",
-       companyLogo:"/images/companies/ecma-corp.png?height=40&width=40",
+      companyLogo: "/images/companies/ecma-corp.png?height=40&width=40",
       position: "Software Engineer",
       location: "Brussels",
       employmentType: "Full time",
@@ -52,7 +57,7 @@ export default function JobBoard() {
     {
       id: "2",
       companyName: "Hash Corp",
-       companyLogo:"/images/companies/hash-corp.png?height=40&width=40",
+      companyLogo: "/images/companies/hash-corp.png?height=40&width=40",
       position: "Junior UI Designer",
       location: "Remote",
       employmentType: "Full time",
@@ -65,7 +70,7 @@ export default function JobBoard() {
     {
       id: "3",
       companyName: "Raleway Inc",
-      companyLogo:"/images/companies/raleway.png?height=40&width=40",
+      companyLogo: "/images/companies/raleway.png?height=40&width=40",
       position: "Technical Support Engineer",
       location: "Austin, Texas",
       employmentType: "Full time",
@@ -76,7 +81,7 @@ export default function JobBoard() {
       isActivelyHiring: false,
     },
   ]);
-  const tabsRef = useRef<HTMLDivElement>(null)
+  const tabsRef = useRef<HTMLDivElement>(null);
   const [newJob, setNewJob] = useState({
     companyName: "",
     position: "",
@@ -84,89 +89,107 @@ export default function JobBoard() {
     employmentType: "",
     salary: "",
     description: "",
-  })
+  });
 
   const handleBookmark = (jobId: string) => {
-    setBookmarkedJobs(prev => {
+    setBookmarkedJobs((prev) => {
       const isCurrentlyBookmarked = prev.includes(jobId);
       const newBookmarks = isCurrentlyBookmarked
-        ? prev.filter(id => id !== jobId)
+        ? prev.filter((id) => id !== jobId)
         : [...prev, jobId];
       return newBookmarks;
     });
   };
 
   useEffect(() => {
-    const lastBookmarkedJob = jobs.find(job => bookmarkedJobs.includes(job.id));
+    const lastBookmarkedJob = jobs.find((job) =>
+      bookmarkedJobs.includes(job.id)
+    );
     if (lastBookmarkedJob) {
       const isBookmarked = bookmarkedJobs.includes(lastBookmarkedJob.id);
       if (isBookmarked) {
-        toast.success(`${lastBookmarkedJob.position} added to bookmarks`, { icon: "🔖" });
+        toast.success(`${lastBookmarkedJob.position} added to bookmarks`, {
+          icon: "🔖",
+        });
       } else {
-        toast.error(`${lastBookmarkedJob.position} removed from bookmarks`, { icon: "🗑️" });
+        toast.error(`${lastBookmarkedJob.position} removed from bookmarks`, {
+          icon: "🗑️",
+        });
       }
     }
   }, [bookmarkedJobs, jobs]);
 
-  const handleApply = (jobId: string) => {
-    setAppliedJobs(prev => {
+  const handleApply = useCallback((jobId: string) => {
+    setAppliedJobs((prev) => {
       if (prev.includes(jobId)) {
-        return prev
+        return prev;
       }
-    
-      toast.success('Applied successfully', { icon: '✅' })
-      return [...prev, jobId]
-    })
-  }
+      return [...prev, jobId];
+    });
+  }, []);
+
+  useEffect(() => {
+    const lastAppliedJob = jobs.find((job) => appliedJobs.includes(job.id));
+    if (lastAppliedJob) {
+      toast.success(`Applied successfully to ${lastAppliedJob.position}`, {
+        icon: "✅",
+      });
+    }
+  }, [appliedJobs, jobs]);
 
   const handleShare = () => {
-    toast.success('Link copied to clipboard')
-  }
+    toast.success("Link copied to clipboard");
+  };
 
-  const scrollTabs = (direction: 'left' | 'right') => {
+  const scrollTabs = (direction: "left" | "right") => {
     if (tabsRef.current) {
-      const scrollAmount = tabsRef.current.offsetWidth
-      const maxScroll = tabsRef.current.scrollWidth - tabsRef.current.offsetWidth
-      let newScrollLeft = tabsRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
-      newScrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll))
+      const scrollAmount = tabsRef.current.offsetWidth;
+      const maxScroll =
+        tabsRef.current.scrollWidth - tabsRef.current.offsetWidth;
+      let newScrollLeft =
+        tabsRef.current.scrollLeft +
+        (direction === "left" ? -scrollAmount : scrollAmount);
+      newScrollLeft = Math.max(0, Math.min(newScrollLeft, maxScroll));
       tabsRef.current.scrollTo({
         left: newScrollLeft,
-        behavior: 'smooth'
-      })
+        behavior: "smooth",
+      });
     }
-  }
+  };
 
   const handleTabClick = (value: string) => {
-    setActiveTab(value)
-  }
+    setActiveTab(value);
+  };
 
   useEffect(() => {
     if (tabsRef.current) {
-      const tab = tabsRef.current.querySelector(`[data-value="${activeTab}"]`) as HTMLElement
+      const tab = tabsRef.current.querySelector(
+        `[data-value="${activeTab}"]`
+      ) as HTMLElement;
       if (tab) {
-        const tabLeft = tab.offsetLeft
-        const tabWidth = tab.offsetWidth
-        const containerWidth = tabsRef.current.offsetWidth
-        const scrollLeft = tabLeft - (containerWidth - tabWidth) / 2
+        const tabLeft = tab.offsetLeft;
+        const tabWidth = tab.offsetWidth;
+        const containerWidth = tabsRef.current.offsetWidth;
+        const scrollLeft = tabLeft - (containerWidth - tabWidth) / 2;
         tabsRef.current.scrollTo({
           left: scrollLeft,
-          behavior: 'smooth'
-        })
+          behavior: "smooth",
+        });
       }
     }
-  }, [activeTab])
+  }, [activeTab]);
 
   const handleNewJobSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const id = (jobs.length + 1).toString()
+    e.preventDefault();
+    const id = (jobs.length + 1).toString();
     const newJobData = {
       ...newJob,
       id,
-      companyLogo: "/placeholder.svg?height=40&width=40",
+      companyLogo: "/images/companies/raleway.png?height=40&width=40",
       postedTime: "Just now",
       isActivelyHiring: true,
-    }
-    setJobs(prevJobs => [newJobData, ...prevJobs])
+    };
+    setJobs((prevJobs) => [newJobData, ...prevJobs]);
     setNewJob({
       companyName: "",
       position: "",
@@ -174,52 +197,91 @@ export default function JobBoard() {
       employmentType: "",
       salary: "",
       description: "",
-    })
-    setActiveTab("navigate-jobs")
-    toast.success('Job posted successfully!')
-  }
+    });
+    setActiveTab("navigate-jobs");
+    toast.success("Job posted successfully!");
+  };
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (subscribeEmail) {
+      setIsSubscribed(true);
+      toast.success("Subscribed successfully!");
+    } else {
+      toast.error("Please enter a valid email address");
+    }
+  };
+
+  const handleResumeUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setResumeUploaded(true);
+      toast.success("Resume uploaded successfully!");
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
       if (tabsRef.current) {
-        tabsRef.current.scrollLeft = 0
+        tabsRef.current.scrollLeft = 0;
       }
-    }
+    };
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
       <div className="container max-w-[1400px] mx-auto px-4 md:px-6 py-8">
-        <Tabs defaultValue="navigate-jobs" className="mb-8" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs
+          defaultValue="navigate-jobs"
+          className="mb-8"
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
           <div className="relative">
             <Button
               variant="outline"
               size="icon"
               className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:hidden"
-              onClick={() => scrollTabs('left')}
+              onClick={() => scrollTabs("left")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <TabsList ref={tabsRef} className="bg-transparent border-b white-border w-full justify-start overflow-x-auto flex-nowrap scrollbar-hide">
-              {["navigate-jobs", "jobs-applied", "jobs-posted", "post-a-job"].map((tab) => (
+            <TabsList
+              ref={tabsRef}
+              className="bg-transparent border-b white-border w-full justify-start overflow-x-auto flex-nowrap scrollbar-hide"
+            >
+              {[
+                "navigate-jobs",
+                "jobs-applied",
+                "jobs-posted",
+                "post-a-job",
+              ].map((tab) => (
                 <TabsTrigger
                   key={tab}
                   value={tab}
                   data-value={tab}
-                  className={`data-[state=active]:bg-[#FB7637] data-[state=active]:text-white rounded-none px-4 py-2 ${
-                    activeTab === tab ? "bg-[#FB7637] text-white" : ""
+                  className={`data-[state=active]:bg-[#FB7637]/10 data-[state=active]:text-[#FB7637] px-4 py-2 border border-transparent rounded-lg ${
+                    activeTab === tab
+                      ? "bg-[#FB7637]/10 text-[#FB7637] border-[#FB7637] hover:bg-[#FB7637]/20"
+                      : "hover:bg-[#FB7637]/5 hover:text-[#FB7637]"
                   }`}
                   onClick={() => handleTabClick(tab)}
                 >
-                  {tab === "navigate-jobs" ? "Navigate Jobs" :
-                   tab === "jobs-applied" ? "Jobs Applied" :
-                   tab === "jobs-posted" ? "Jobs Posted" : "Post a Job"}
+                  {tab === "navigate-jobs"
+                    ? "Navigate Jobs"
+                    : tab === "jobs-applied"
+                    ? "Jobs Applied"
+                    : tab === "jobs-posted"
+                    ? "Jobs Posted"
+                    : "Post a Job"}
                   {tab === "jobs-applied" && (
-                    <span className="ml-2 bg-white text-[#FB7637] rounded-full px-2 py-0.5 text-xs">{appliedJobs.length}</span>
+                    <span className="ml-2 bg-white text-[#FB7637] rounded-full px-2 py-0.5 text-xs">
+                      {appliedJobs.length}
+                    </span>
                   )}
                 </TabsTrigger>
               ))}
@@ -228,7 +290,7 @@ export default function JobBoard() {
               variant="outline"
               size="icon"
               className="absolute right-0 top-1/2 -translate-y-1/2 z-10 md:hidden"
-              onClick={() => scrollTabs('right')}
+              onClick={() => scrollTabs("right")}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -236,21 +298,28 @@ export default function JobBoard() {
 
           <div className="mt-8 mb-8">
             <h1 className="text-2xl md:text-3xl font-bold">
-              Navigate <span className="text-[#FB7637]">jobs</span> on Launchboard
+              Navigate <span className="text-[#FB7637]">jobs</span> on
+              Launchboard
             </h1>
             <p className="text-muted-foreground mt-2">
-              Find your perfect role with easy job search and flexible compensations
+              Find your perfect role with easy job search and flexible
+              compensations
             </p>
             <div className="mt-6 flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-5 w-5 -mt-1 text-muted-foreground" />
-                <Input className="pl-10" placeholder="What position are you looking for?" />
+                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input
+                  className="pl-10"
+                  placeholder="What position are you looking for?"
+                />
               </div>
               <div className="relative md:w-64">
-                <MapPin className="absolute left-3 top-3 h-5 w-5 -mt-1 text-muted-foreground" />
+                <MapPin className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input className="pl-10" placeholder="Location" />
               </div>
-              <Button className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">Search</Button>
+              <Button className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">
+                Search
+              </Button>
             </div>
           </div>
 
@@ -261,12 +330,36 @@ export default function JobBoard() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="mb-4 font-semibold">Location</h3>
-                    <RadioGroup value={selectedLocation} onValueChange={setSelectedLocation}>
+                    <RadioGroup
+                      value={selectedLocation}
+                      onValueChange={setSelectedLocation}
+                    >
                       <div className="space-y-2">
-                        {["Any", "Remote job", "Same City", "Same State", "Same country", "Within 15 kms"].map((option) => (
-                          <div key={option} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.toLowerCase().replace(/\s/g, '-')} id={`location-${option.toLowerCase().replace(/\s/g, '-')}`} />
-                            <Label htmlFor={`location-${option.toLowerCase().replace(/\s/g, '-')}`}>{option}</Label>
+                        {[
+                          "Any",
+                          "Remote job",
+                          "Same City",
+                          "Same State",
+                          "Same country",
+                          "Within 15 kms",
+                        ].map((option) => (
+                          <div
+                            key={option}
+                            className="flex items-center space-x-2"
+                          >
+                            <RadioGroupItem
+                              value={option.toLowerCase().replace(/\s/g, "-")}
+                              id={`location-${option
+                                .toLowerCase()
+                                .replace(/\s/g, "-")}`}
+                            />
+                            <Label
+                              htmlFor={`location-${option
+                                .toLowerCase()
+                                .replace(/\s/g, "-")}`}
+                            >
+                              {option}
+                            </Label>
                           </div>
                         ))}
                       </div>
@@ -275,12 +368,31 @@ export default function JobBoard() {
 
                   <div>
                     <h3 className="mb-4 font-semibold">Compensation</h3>
-                    <RadioGroup value={selectedCompensation} onValueChange={setSelectedCompensation}>
+                    <RadioGroup
+                      value={selectedCompensation}
+                      onValueChange={setSelectedCompensation}
+                    >
                       <div className="space-y-2">
-                        {["Any", "Equity", "Project tokens", "Stablecoins", "Hybrid"].map((option) => (
-                          <div key={option} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.toLowerCase()} id={`compensation-${option.toLowerCase()}`} />
-                            <Label htmlFor={`compensation-${option.toLowerCase()}`}>{option}</Label>
+                        {[
+                          "Any",
+                          "Equity",
+                          "Project tokens",
+                          "Stablecoins",
+                          "Hybrid",
+                        ].map((option) => (
+                          <div
+                            key={option}
+                            className="flex items-center space-x-2"
+                          >
+                            <RadioGroupItem
+                              value={option.toLowerCase()}
+                              id={`compensation-${option.toLowerCase()}`}
+                            />
+                            <Label
+                              htmlFor={`compensation-${option.toLowerCase()}`}
+                            >
+                              {option}
+                            </Label>
                           </div>
                         ))}
                       </div>
@@ -293,12 +405,18 @@ export default function JobBoard() {
                       {["Hourly", "Monthly", "Yearly"].map((type) => (
                         <Button
                           key={type}
-                          variant={selectedSalaryType === type.toLowerCase() ? "default" : "outline"}
+                          variant={
+                            selectedSalaryType === type.toLowerCase()
+                              ? "default"
+                              : "outline"
+                          }
                           size="sm"
-                          onClick={() => setSelectedSalaryType(type.toLowerCase())}
+                          onClick={() =>
+                            setSelectedSalaryType(type.toLowerCase())
+                          }
                           className={`flex-1 ${
-                            selectedSalaryType === type.toLowerCase() 
-                              ? "bg-[#FB7637]/10 text-[#FB7637] border-[#FB7637] hover:bg-[#FB7637]/20" 
+                            selectedSalaryType === type.toLowerCase()
+                              ? "bg-[#FB7637]/10 text-[#FB7637] border-[#FB7637] hover:bg-[#FB7637]/20"
                               : ""
                           }`}
                         >
@@ -307,12 +425,19 @@ export default function JobBoard() {
                       ))}
                     </div>
                     <div className="space-y-2">
-                      {["$30000K", "$50000K", "$80000K", "$100000K"].map((amount) => (
-                        <div key={amount} className="flex items-center space-x-2">
-                          <Checkbox id={`salary-${amount}`} />
-                          <Label htmlFor={`salary-${amount}`}>{">"} {amount}</Label>
-                        </div>
-                      ))}
+                      {["$30000K", "$50000K", "$80000K", "$100000K"].map(
+                        (amount) => (
+                          <div
+                            key={amount}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox id={`salary-${amount}`} />
+                            <Label htmlFor={`salary-${amount}`}>
+                              {">"} {amount}
+                            </Label>
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -347,7 +472,11 @@ export default function JobBoard() {
                   ))}
                 </div>
                 <div className="mt-6 flex justify-center">
-                  <Button variant="outline" size="sm" className="mx-1 text-xs sm:text-sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mx-1 text-xs sm:text-sm"
+                  >
                     <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 rotate-90" />
                     Prev
                   </Button>
@@ -356,12 +485,20 @@ export default function JobBoard() {
                       key={page}
                       variant={page === 1 ? "default" : "outline"}
                       size="sm"
-                      className={`mx-1 text-xs sm:text-sm ${page === 1 ? "bg-[#FB7637] text-white hover:bg-[#FB7637]/90" : ""}`}
+                      className={`mx-1 text-xs sm:text-sm ${
+                        page === 1
+                          ? "bg-[#FB7637] text-white hover:bg-[#FB7637]/90"
+                          : ""
+                      }`}
                     >
                       {page}
                     </Button>
                   ))}
-                  <Button variant="outline" size="sm" className="mx-1 text-xs sm:text-sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mx-1 text-xs sm:text-sm"
+                  >
                     Next
                     <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 rotate-270" />
                   </Button>
@@ -371,26 +508,69 @@ export default function JobBoard() {
               {/* Right Sidebar */}
               <div className="md:col-span-3 space-y-6">
                 <Card className="p-4 white-border">
-                  <div className="space-y-4">
+                  <form onSubmit={handleSubscribe} className="space-y-4">
                     <h3 className="font-semibold">Email me for jobs</h3>
                     <p className="text-sm text-muted-foreground">
                       Get personalized recommendation for newly posted jobs
                     </p>
-                    <Input type="email" placeholder="name@email.com" className="white-border" />
-                    <Button className="w-full bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">
-                      Subscribe
+                    <Input
+                      type="email"
+                      placeholder="name@email.com"
+                      className="white-border"
+                      value={subscribeEmail}
+                      onChange={(e) => setSubscribeEmail(e.target.value)}
+                      disabled={isSubscribed}
+                    />
+                    <Button
+                      type="submit"
+                      className={`w-full ${
+                        isSubscribed
+                          ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed"
+                          : "bg-[#FB7637] hover:bg-[#FB7637]/90"
+                      } text-white`}
+                      disabled={isSubscribed}
+                    >
+                      {isSubscribed ? "Subscribed" : "Subscribe"}
                     </Button>
-                  </div>
+                  </form>
                 </Card>
                 <Card className="p-4 white-border">
                   <div className="space-y-4">
                     <h3 className="font-semibold">Get noticed faster</h3>
                     <p className="text-sm text-muted-foreground">
-                      A well maintained profile increases your chances of getting hired substantially
+                      A well maintained profile increases your chances of
+                      getting hired substantially
                     </p>
-                    <div className="text-center text-sm text-muted-foreground">80% completed</div>
-                    <Button className="w-full bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">
-                      Upload your resume
+                    <div className="text-center text-sm text-muted-foreground">
+                      80% completed
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={handleResumeUpload}
+                      accept=".pdf,.doc,.docx"
+                    />
+                    <Button
+                      className={`w-full ${
+                        resumeUploaded
+                          ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed"
+                          : "bg-[#FB7637] hover:bg-[#FB7637]/90"
+                      } text-white`}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={resumeUploaded}
+                    >
+                      {resumeUploaded ? (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Resume Uploaded
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload your resume
+                        </>
+                      )}
                     </Button>
                   </div>
                 </Card>
@@ -400,15 +580,19 @@ export default function JobBoard() {
 
           <TabsContent value="jobs-applied">
             <div className="flex flex-col items-center justify-center h-[60vh]">
-              <Image 
-                src="/placeholder.svg?height=128&width=128" 
-                width={128} 
-                height={128} 
-                alt="No jobs applied" 
-                className="mb-4" 
+              <Image
+                src="/placeholder.svg?height=128&width=128"
+                width={128}
+                height={128}
+                alt="No jobs applied"
+                className="mb-4"
               />
-              <h2 className="text-2xl font-semibold mb-2">No jobs applied yet</h2>
-              <p className="text-muted-foreground mb-4">Start applying to jobs to see them here</p>
+              <h2 className="text-2xl font-semibold mb-2">
+                No jobs applied yet
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Start applying to jobs to see them here
+              </p>
               <Button className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">
                 Explore jobs
               </Button>
@@ -417,16 +601,23 @@ export default function JobBoard() {
 
           <TabsContent value="jobs-posted">
             <div className="flex flex-col items-center justify-center h-[60vh]">
-              <Image 
-                src="/placeholder.svg?height=128&width=128" 
-                width={128} 
-                height={128} 
-                alt="No jobs posted" 
-                className="mb-4" 
+              <Image
+                src="/placeholder.svg?height=128&width=128"
+                width={128}
+                height={128}
+                alt="No jobs posted"
+                className="mb-4"
               />
-              <h2 className="text-2xl font-semibold mb-2">No jobs posted yet</h2>
-              <p className="text-muted-foreground mb-4">Start posting jobs to see them here</p>
-              <Button className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white" onClick={() => setActiveTab("post-a-job")}>
+              <h2 className="text-2xl font-semibold mb-2">
+                No jobs posted yet
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Start posting jobs to see them here
+              </p>
+              <Button
+                className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white"
+                onClick={() => setActiveTab("post-a-job")}
+              >
                 Post a job
               </Button>
             </div>
@@ -441,7 +632,9 @@ export default function JobBoard() {
                   <Input
                     id="companyName"
                     value={newJob.companyName}
-                    onChange={(e) => setNewJob({...newJob, companyName: e.target.value})}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, companyName: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -450,7 +643,9 @@ export default function JobBoard() {
                   <Input
                     id="position"
                     value={newJob.position}
-                    onChange={(e) => setNewJob({...newJob, position: e.target.value})}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, position: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -459,7 +654,9 @@ export default function JobBoard() {
                   <Input
                     id="location"
                     value={newJob.location}
-                    onChange={(e) => setNewJob({...newJob, location: e.target.value})}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, location: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -468,7 +665,9 @@ export default function JobBoard() {
                   <Input
                     id="employmentType"
                     value={newJob.employmentType}
-                    onChange={(e) => setNewJob({...newJob, employmentType: e.target.value})}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, employmentType: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -477,7 +676,9 @@ export default function JobBoard() {
                   <Input
                     id="salary"
                     value={newJob.salary}
-                    onChange={(e) => setNewJob({...newJob, salary: e.target.value})}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, salary: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -486,11 +687,16 @@ export default function JobBoard() {
                   <Textarea
                     id="description"
                     value={newJob.description}
-                    onChange={(e) => setNewJob({...newJob, description: e.target.value})}
+                    onChange={(e) =>
+                      setNewJob({ ...newJob, description: e.target.value })
+                    }
                     required
                   />
                 </div>
-                <Button type="submit" className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white">
+                <Button
+                  type="submit"
+                  className="bg-[#FB7637] hover:bg-[#FB7637]/90 text-white"
+                >
                   Post Job
                 </Button>
               </form>
@@ -508,5 +714,5 @@ export default function JobBoard() {
         `}</style>
       </div>
     </div>
-  )
+  );
 }

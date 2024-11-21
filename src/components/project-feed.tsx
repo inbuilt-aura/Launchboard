@@ -3,23 +3,37 @@
 import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, MessageCircle, Share2 } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
-import { Navbar } from "@/components/navbar";
-
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+interface Project {
+  id: number;
+  name: string;
+  logo: string;
+  description: string;
+  shortDescription: string;
+  location: string;
+  type: string;
+  employees: string;
+  stage: string;
+  fundingStatus: string;
+  likes: number;
+  comments: number;
+}
+
 const projectCategories = [
-    "All", "AI", "Web3", "Enterprise", "DeSoc", "Data & Analytics", "DeFin", "GameFi", "DePIN"
-  ]
-const projects = [
+  "All", "AI", "Web3", "Enterprise", "DeSoc", "Data & Analytics", "DeFin", "GameFi", "DePIN"
+]
+
+const projects: Project[] = [
   {
     id: 1,
     name: "Hash Corp",
     logo: "/images/companies/hash-corp.png?height=48&width=48",
     description: "A state-of-the-art AI face analyzer which gives you a compatible skin care routine as per your needs",
+    shortDescription: "AI-powered skincare analysis",
     location: "San Francisco",
     type: "B2B",
     employees: "10 employees",
@@ -33,6 +47,7 @@ const projects = [
     name: "Ecma Corp",
     logo: "/images/companies/ecma-corp.png?height=48&width=48",
     description: "A state-of-the-art AI face analyzer which gives you a compatible skin care routine as per your needs",
+    shortDescription: "Next-gen JavaScript tools",
     location: "San Francisco",
     type: "B2B",
     employees: "10 employees",
@@ -46,6 +61,7 @@ const projects = [
     name: "Frie AI",
     logo: "/images/companies/frie.png?height=48&width=48",
     description: "A state-of-the-art AI face analyzer which gives you a compatible skin care routine as per your needs",
+    shortDescription: "AI-driven personal assistant",
     location: "San Francisco",
     type: "B2B",
     employees: "10 employees",
@@ -56,16 +72,11 @@ const projects = [
   },
 ]
 
-export default function ProjectFeed() {
+export function ProjectFeed({ onProjectClick }: { onProjectClick: (project: Project) => void }) {
   const [selectedCategory, setSelectedCategory] = useState("All")
 
   return (
-    <div>
-
-
-        <Navbar/>
-
-    <div className="container max-w-[1400px] pt-20 mx-auto px-4 py-8">
+    <div className="container max-w-[1400px] mx-auto px-4 py-8">
       <Tabs defaultValue="navigate-projects" className="w-full">
         <TabsList className="mb-6 bg-transparent border-b border-gray-200">
           <TabsTrigger 
@@ -154,7 +165,7 @@ export default function ProjectFeed() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {projects.map((project) => (
-                    <ProjectCard key={project.id} project={project} />
+                    <ProjectCard key={project.id} project={project} onClick={() => onProjectClick(project)} />
                   ))}
                 </div>
               </div>
@@ -180,14 +191,12 @@ export default function ProjectFeed() {
         </TabsContent>
       </Tabs>
     </div>
-    
-    </div>
   )
 }
 
-function ProjectCard({ project }) {
+function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden cursor-pointer" onClick={onClick}>
       <CardHeader className="p-6">
         <div className="flex items-center gap-4">
           <Image
@@ -199,6 +208,7 @@ function ProjectCard({ project }) {
           />
           <div>
             <CardTitle className="text-lg">{project.name}</CardTitle>
+            <p className="text-sm text-gray-600 mb-1">{project.shortDescription}</p>
             <div className="flex gap-2 mt-1">
               <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{project.stage}</span>
               <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">{project.fundingStatus}</span>
@@ -234,3 +244,4 @@ function ProjectCard({ project }) {
     </Card>
   )
 }
+
